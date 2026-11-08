@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP, Image
 from mcp.types import ToolAnnotations
 from mcp.server.transport_security import TransportSecuritySettings
 
@@ -107,10 +107,23 @@ def build_app(library):
         """列出公开 GitHub 图片库内的表情包相对文件名，包括子目录。"""
         return await library.list_stickers()
 
-    @mcp.tool(annotations=read_only, structured_output=True)
-    async def show_sticker(filename: str) -> dict[str, Any]:
-        """用 list_stickers 返回的完整文件名获取 jsDelivr 链接及 Markdown。"""
-        return await library.show_sticker(filename)
+    @mcp.tool(annotations=read_only, structured_output=False)
+    async def show_sticker(filename: str):
+        """获取并返回表情包图片本身。"""
+        sticker = await library.show_sticker(filename)
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(sticker["url"])
+            response.raise_for_status()
+        if len(response.content) > 5 * 1024 * 1024:
+            raise ValueError("图片超过 5MB，请先压缩")
+        mime = response.headers.get("content-type", "").split(";")[0]
+        formats = {
+            "image/jpeg": "jpeg", "image/png": "png",
+            "image/gif": "gif", "image/webp": "webp",
+        }
+        if mime not in formats:
+            raise ValueError("暂不支持这种图片格式")
+        return Image(data=response.content, format=formats[mime])
 
     mcp_app = mcp.streamable_http_app()
 
