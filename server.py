@@ -32,7 +32,7 @@ class StickerLibrary:
         self._lock = asyncio.Lock()
 
     async def _get(self, client, path):
-        response = await client.get(f'https://api.github.com/repos/{self.repo}/{path}')
+        response = await client.get(f'https://api.github.com/repos/{self.repo}' + (f'/{path}' if path else ''))
         if response.status_code == 404:
             raise ValueError('仓库、分支或文件不存在；请确认仓库是公开的')
         if response.status_code in {403, 429}:
