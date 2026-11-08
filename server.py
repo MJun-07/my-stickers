@@ -108,23 +108,10 @@ def build_app(library):
         return await library.list_stickers()
 
     @mcp.tool(annotations=read_only, structured_output=True)
+    @mcp.tool(annotations=read_only, structured_output=True)
     async def show_sticker(filename: str) -> dict[str, Any]:
         """返回表情包链接和 Markdown。"""
-        return await library.show_sticker(filename)show_sticker(filename)
-        async with httpx.AsyncClient(timeout=30) as client:
-            response = await client.get(sticker["url"])
-            response.raise_for_status()
-        if len(response.content) > 5 * 1024 * 1024:
-            raise ValueError("图片超过 5MB，请先压缩")
-        mime = response.headers.get("content-type", "").split(";")[0]
-        formats = {
-            "image/jpeg": "jpeg", "image/png": "png",
-            "image/gif": "gif", "image/webp": "webp",
-        }
-        if mime not in formats:
-            raise ValueError("暂不支持这种图片格式")
-        return Image(data=response.content, format=formats[mime])
-
+        return await library.show_sticker(filename)
     mcp_app = mcp.streamable_http_app()
 
     @asynccontextmanager
