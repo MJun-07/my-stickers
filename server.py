@@ -107,10 +107,10 @@ def build_app(library):
         """列出公开 GitHub 图片库内的表情包相对文件名，包括子目录。"""
         return await library.list_stickers()
 
-    @mcp.tool(annotations=read_only, structured_output=False)
-    async def show_sticker(filename: str):
-        """获取并返回表情包图片本身。"""
-        sticker = await library.show_sticker(filename)
+    @mcp.tool(annotations=read_only, structured_output=True)
+    async def show_sticker(filename: str) -> dict[str, Any]:
+        """返回表情包链接和 Markdown。"""
+        return await library.show_sticker(filename)show_sticker(filename)
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.get(sticker["url"])
             response.raise_for_status()
